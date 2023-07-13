@@ -1,0 +1,69 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Oct 10 10:56:59 2021
+
+@author: chairman
+"""
+import pandas as pd
+
+def realdate(stamp):
+    delta = pd.Timedelta(str(stamp)+'D')
+    real_time = pd.to_datetime('1899-12-30') + delta
+    return real_time
+
+def get_info_one_sheet(sheet,reader,data0):
+    data=reader.parse(sheet_name=sheet,header=None)
+    classtime_table_one_sheet=[]
+    for i in range(0,data.shape[0]):
+        if data.loc[i,0]=="教师姓名":
+            data1=data.iloc[i:i+10].reset_index(drop=True)
+            tname_in_table=data1.loc[0,1]
+            print(tname_in_table)
+            #if tname_in_table=="陈露--英语":
+                #input("123")
+            for a in range(len(data0)):
+                #print(data0.loc[a,'课表教师姓名'])
+                if data0.loc[a,'课表教师姓名']==tname_in_table:
+                    tname=data0.loc[a,'教师姓名']
+                    print(tname)
+                    break
+
+            for c in range(1,data1.shape[1]):   
+                classdate=data1.loc[2,c]
+                #print(type(classdate))
+                if type(classdate)=='int':
+                    classdate=realdate(classdate)
+                elif type(classdate)=='datetime.datetime':
+                    pass
+                    
+                for r in range(3,data1.shape[0]):
+                    if data1.loc[r,0]!="午休":
+                        classtime=data1.loc[r,0]
+                        classname=data1.loc[r,c]
+                        if str(classname) not in ["nan","NaT"]:
+                            classtime_table_info_one_row=[classtime,tname_in_table,classdate,classname,tname]
+                            classtime_table_one_sheet.append(classtime_table_info_one_row)
+            
+    return classtime_table_one_sheet
+    
+def class_time_table():
+    fpath=r"D:\OneDrive - weixinedu\2021年秋季课表预排.xlsx"
+    reader=pd.ExcelFile(fpath)
+    data0=reader.parse(sheet_name="教师姓名表")
+
+    classtime_table=[]
+    for sheet in reader.sheet_names:
+        if sheet !="教师姓名表":
+            #print(sheet)
+            classtime_table_one_sheet=get_info_one_sheet(sheet,reader,data0)
+            classtime_table+=classtime_table_one_sheet
+
+
+    classtime_table=pd.DataFrame(classtime_table)
+    classtime_table.columns = ['上课时间','课表教师姓名','上课日期','值','教师姓名']
+    classtime_table.to_excel(r"D:\OneDrive - weixinedu\OA\课表预排整理.xlsx",index=False)
+    print("课表整理完毕")
+
+if __name__ == '__main__':
+    class_time_table() 
+
